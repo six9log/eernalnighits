@@ -1,31 +1,47 @@
--- [[ SIX HUB - ETERNAL NIGHTS: ULTRALITE EDITION ]]
--- Atalho: HOME
+-- [[ SIX HUB - ETERNAL NIGHTS: COMPLETO & OTIMIZADO ]]
+-- Tecla para Abrir/Fechar: HOME
 
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
 local Window = Library.CreateLib("Six Hub: Eternal Nights", "BloodTheme")
 
--- --- CONFIGS ---
+-- --- CONFIGURAÇÕES GLOBAIS ---
 _G.AnimatronicESP = false
 _G.PlayerESP = false
 _G.ItemESP = false
 _G.Noclip = false
+_G.FullBright = false
 _G.WalkSpeed = 16
 
 local Cache = {Monsters = {}, Players = {}, Items = {}}
 
--- --- INTERFACE ---
+-- --- ABA 1: VISUAIS ---
 local Tab1 = Window:NewTab("Visuals")
 local Sec1 = Tab1:NewSection("Rastreadores (Event-Based)")
 
-Sec1:NewToggle("ESP Animatronics", "Luz vermelha", function(s) _G.AnimatronicESP = s end)
-Sec1:NewToggle("ESP Aliados", "Luz verde", function(s) _G.PlayerESP = s end)
-Sec1:NewToggle("ESP Itens", "Luz amarela", function(s) _G.ItemESP = s end)
+Sec1:NewToggle("ESP Animatronics", "Destaque em Vermelho", function(s) _G.AnimatronicESP = s end)
+Sec1:NewToggle("ESP Aliados", "Destaque em Verde", function(s) _G.PlayerESP = s end)
+Sec1:NewToggle("ESP Itens", "Destaque em Amarelo", function(s) _G.ItemESP = s end)
 
+local Sec2 = Tab1:NewSection("Iluminação")
+Sec2:NewToggle("FullBright (Visão Clara)", "Remove a escuridão", function(s) 
+    _G.FullBright = s 
+    if s then
+        game:GetService("Lighting").Ambient = Color3.fromRGB(255, 255, 255)
+        game:GetService("Lighting").OutdoorAmbient = Color3.fromRGB(255, 255, 255)
+    else
+        game:GetService("Lighting").Ambient = Color3.fromRGB(0, 0, 0)
+        game:GetService("Lighting").OutdoorAmbient = Color3.fromRGB(0, 0, 0)
+    end
+end)
+
+-- --- ABA 2: MOVIMENTO ---
 local Tab2 = Window:NewTab("Movimento")
-Tab2:NewSection("Personagem"):NewSlider("Velocidade", "Speed", 100, 16, function(s) _G.WalkSpeed = s end)
-Tab2:NewToggle("Noclip", "Atravessar paredes", function(s) _G.Noclip = s end)
+local Sec3 = Tab2:NewSection("Atributos & Física")
 
--- --- FUNÇÃO DE CRIAÇÃO (SÓ RODA 1 VEZ POR OBJETO) ---
+Sec3:NewSlider("Velocidade", "Ajuste o Speed", 150, 16, function(s) _G.WalkSpeed = s end)
+Sec3:NewToggle("Noclip (NC)", "Atravessar qualquer coisa", function(s) _G.Noclip = s end)
+
+-- --- FUNÇÃO DE CRIAÇÃO DE ESP ---
 local function ApplyESP(obj, color, group)
     if not obj or obj:FindFirstChild("SixESP") then return end
     
@@ -54,10 +70,10 @@ local function ApplyESP(obj, color, group)
     table.insert(Cache[group], obj)
 end
 
--- --- MONITOR DE NOVOS OBJETOS (MUITO LEVE) ---
+-- --- MONITOR DE NOVOS OBJETOS ---
 local function Check(v)
     if v:IsA("Model") and v:FindFirstChild("Humanoid") then
-        task.wait(0.5) -- Espera carregar o nome real
+        task.wait(0.5)
         if game.Players:GetPlayerFromCharacter(v) then
             if v ~= game.Players.LocalPlayer.Character then ApplyESP(v, Color3.new(0,1,0), "Players") end
         else
@@ -71,17 +87,17 @@ end
 workspace.DescendantAdded:Connect(Check)
 for _, v in pairs(workspace:GetDescendants()) do task.spawn(Check, v) end
 
--- --- LOOP DE ATUALIZAÇÃO (FLUIDO E LEVE) ---
+-- --- LOOP DE ATUALIZAÇÃO (DISTANCE & SPEED) ---
 task.spawn(function()
     while true do
         local lp = game.Players.LocalPlayer.Character
         local root = lp and lp:FindFirstChild("HumanoidRootPart")
         
         if root then
-            -- Speed
+            -- Speed Hack
             if lp:FindFirstChild("Humanoid") then lp.Humanoid.WalkSpeed = _G.WalkSpeed end
             
-            -- Distâncias (Apenas no que já está no Cache)
+            -- Distâncias (Lógica de Cache)
             for group, list in pairs(Cache) do
                 local enabled = (group == "Monsters" and _G.AnimatronicESP) or (group == "Players" and _G.PlayerESP) or (group == "Items" and _G.ItemESP)
                 
@@ -100,11 +116,11 @@ task.spawn(function()
                 end
             end
         end
-        task.wait(0.1) -- 10 Atualizações por segundo (Suave e sem lag)
+        task.wait(0.1)
     end
 end)
 
--- --- NOCLIP OTIMIZADO ---
+-- --- NOCLIP (NC) - RODANDO EM STEPPED PARA FLUIDEZ ---
 game:GetService("RunService").Stepped:Connect(function()
     if _G.Noclip and game.Players.LocalPlayer.Character then
         for _, v in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
@@ -113,4 +129,5 @@ game:GetService("RunService").Stepped:Connect(function()
     end
 end)
 
+-- --- ABA SETTINGS ---
 Window:NewTab("Settings"):NewSection("Menu"):NewKeybind("Abrir/Fechar", "HOME", Enum.KeyCode.Home, function() Library:ToggleUI() end)
